@@ -61,10 +61,14 @@
             <li class="nav-item">
               <a class="nav-link" href="contact-us.html">CONTACT</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="team.html">OUR TEAM</a>
+            </li>
           </ul>
         </div>
         <div class="nav-icons">
           <a href="faq.html" aria-label="Help and FAQ"><i class="fa-regular fa-circle-question"></i></a>
+          <a href="account.html" class="account-link" aria-label="My account"><i class="fa-regular fa-user"></i><span class="account-name" data-account-name></span></a>
           <a href="cart.html" aria-label="Cart"><i class="fa-solid fa-bag-shopping"></i><span class="cart-count" data-cart-count></span></a>
         </div>
       </div>
@@ -186,6 +190,11 @@
         <p><span class="stars" aria-hidden="true">★★★★★</span> 4.8 · <a href="overview.html#reviews">Read reviews</a></p>
         <p class="mb-1"><span class="price-big" id="price">S$139.90</span><span class="price-was" id="price-was">S$169.90</span></p>
         <p style="font-size: 14px">Inclusive of GST · Free next-day delivery</p>
+        <!-- Live social proof. DEMO DATA: in production these come from real-time analytics and order records. -->
+        <div class="live-proof" aria-live="polite">
+          <span><span class="live-dot" aria-hidden="true"></span><strong data-viewers>14</strong> people are viewing this right now</span>
+          <span><i class="fa-solid fa-fire"></i> <strong data-sold>1,286</strong> sold · <strong data-sold-today>37</strong> in the last 24 hours</span>
+        </div>
 
         <p class="mb-1 mt-3"><strong>Colour:</strong> <span id="colour-name">Midnight Navy</span></p>
         <div class="product-grid-container" role="group" aria-label="Choose a colour">
@@ -282,13 +291,18 @@
   <rect x="270" y="380" width="60" height="8" rx="4" fill="#001b26" opacity=".3"/>
 </svg></button>
         </div>
+        <!-- Stock alert. DEMO DATA: in production stock levels come from the inventory system. -->
+        <div class="stock-alert" id="stock-alert" aria-live="polite">
+          <p class="mb-1" id="stock-text">In stock</p>
+          <div class="stock-bar" aria-hidden="true"><span id="stock-fill"></span></div>
+        </div>
 
         <fieldset class="mt-4">
           <legend style="font-size: 16px; font-weight: 700">Bundle</legend>
           <label class="bundle-option"><input type="radio" name="bundle" value="starter" />
             <strong>Starter · S$99.90</strong><br /><small>Printer, 10 sheets, USB-C cable</small></label>
           <label class="bundle-option"><input type="radio" name="bundle" value="creator" checked />
-            <strong>Creator Bundle · S$139.90</strong> <span class="platform shopee" style="background:#e36339">BEST VALUE</span><br /><small>Printer, 60 sheets, travel pouch, 20 premium frames</small></label>
+            <strong>Creator Bundle · S$139.90</strong> <span class="platform shopee" style="background:#e36339;white-space:nowrap">BEST VALUE</span><br /><small>Printer, 60 sheets, travel pouch, 20 premium frames</small></label>
         </fieldset>
 
         <div class="d-flex align-items-center gap-2 mt-2">
@@ -395,6 +409,7 @@
             <li class="nav-item-footer"><a class="nav-link-footer" href="contact-us.html">Contact</a></li>
             <li class="nav-item-footer"><a class="nav-link-footer" href="faq.html">FAQ</a></li>
             <li class="nav-item-footer"><a class="nav-link-footer" href="service.html">Service Centre</a></li>
+            <li class="nav-item-footer"><a class="nav-link-footer" href="account.html">My Account</a></li>
             <li class="nav-item-footer"><a class="nav-link-footer" href="team.html">Our Team</a></li>
             <li class="nav-item-footer"><a class="nav-link-footer" href="pdpa.html">Privacy Policy (PDPA)</a></li>
           </ul>
@@ -496,6 +511,7 @@
                   </div>
                   <button type="submit" class="orange-button mt-3">JOIN &amp; GET 10% OFF</button>
                   <button type="button" class="member-nothanks" data-bs-dismiss="modal">No thanks, I'll pay full price</button>
+                  <p class="text-center mb-0 mt-2" style="font-size: 13px">Already a member? <a href="account.html">Log in</a></p>
                 </form>
               </div>
               <div id="member-done" hidden>

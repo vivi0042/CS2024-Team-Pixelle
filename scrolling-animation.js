@@ -114,6 +114,71 @@
     else document.addEventListener("pixelle:consent", scheduleMember, { once: true });
   }
 
+  /* ---------- live social proof (DEMO DATA: replace with real analytics / order counts) ---------- */
+  var viewersEls = document.querySelectorAll("[data-viewers]");
+  if (viewersEls.length) {
+    var viewers = 9 + Math.floor(Math.random() * 10);
+    var tick = function () {
+      viewers = Math.min(30, Math.max(6, viewers + Math.floor(Math.random() * 5) - 2));
+      viewersEls.forEach(function (el) { el.textContent = viewers; });
+      setTimeout(tick, 4000 + Math.random() * 3000);
+    };
+    tick();
+  }
+
+  /* ---------- member account (demo: no real authentication) ---------- */
+  function getUser() { return load(SS, "pixelle-user", null) || load(LS, "pixelle-user", null); }
+  function setUser(first, remember) {
+    // Only a first name is kept in the browser so we can greet the member. Passwords are never stored.
+    var u = { first: first };
+    save(remember ? LS : SS, "pixelle-user", u);
+  }
+  function logout() {
+    try { SS.removeItem("pixelle-user"); LS.removeItem("pixelle-user"); } catch (e) { /* ignore */ }
+  }
+  function titleCase(t) { return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase(); }
+  function renderAccount() {
+    var u = getUser();
+    document.querySelectorAll("[data-account-name]").forEach(function (el) { el.textContent = u ? u.first : ""; });
+    var auth = document.getElementById("account-auth");
+    if (!auth) return;
+    var dash = document.getElementById("account-dashboard");
+    auth.hidden = !!u;
+    dash.hidden = !u;
+    if (!u) return;
+    document.querySelectorAll("[data-account-first]").forEach(function (el) { el.textContent = u.first.toUpperCase(); });
+    document.querySelectorAll("[data-account-first-card]").forEach(function (el) { el.textContent = u.first; });
+    var order = load(SS, "pixelle-order", null);
+    if (order) document.querySelector("[data-account-orders]").textContent = "Order " + order.no + " · " + order.total + " · Confirmed";
+    if (load(LS, "pixelle-fav", false)) document.querySelector("[data-account-fav]").textContent = "PIXELLE Snap ♥";
+  }
+  document.querySelectorAll("[data-logout]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      logout();
+      renderAccount();
+      var loginTab = document.querySelector('[data-bs-target="#login-pane"]');
+      if (loginTab && window.bootstrap) bootstrap.Tab.getOrCreateInstance(loginTab).show();
+      window.scrollTo(0, 0);
+    });
+  });
+  document.querySelectorAll("[data-pw-toggle]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var input = document.getElementById(b.getAttribute("data-pw-toggle"));
+      var show = input.type === "password";
+      input.type = show ? "text" : "password";
+      b.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      b.querySelector("i").className = show ? "fa-regular fa-eye-slash" : "fa-regular fa-eye";
+    });
+  });
+  document.querySelectorAll("[data-forgot]").forEach(function (a) {
+    a.addEventListener("click", function (e) {
+      e.preventDefault();
+      var status = a.closest("form").querySelector("[data-status]");
+      status.style.color = "#2f7a4f";
+      status.textContent = "If an account exists for that email, we've sent a password reset link.";
+    });
+  });
+
   /* ---------- cart ---------- */
   var PRODUCTS = {
     starter: { name: "PIXELLE Snap · Starter", price: 99.9 },
@@ -168,6 +233,24 @@
       colourLabel.textContent = COLOUR_NAMES[c];
       priceEl.textContent = money(PRODUCTS[state.sku].price);
       wasEl.textContent = money(WAS[state.sku]);
+      renderStock();
+    }
+    /* Stock per colour. DEMO DATA: in production this comes from the inventory system. */
+    var STOCK = { navy: 23, coral: 9, cream: 16, sage: 6 };
+    var addBtn = document.getElementById("add-to-cart");
+    function renderStock() {
+      var c = state.colour;
+      var inCart = getCart().filter(function (i) { return i.colour === c; }).reduce(function (n, i) { return n + i.qty; }, 0);
+      var left = Math.max(0, STOCK[c] - inCart);
+      var box = document.getElementById("stock-alert");
+      var text = document.getElementById("stock-text");
+      box.className = "stock-alert" + (left === 0 ? " out" : left <= 10 ? " urgent" : "");
+      if (left === 0) text.innerHTML = '<i class="fa-solid fa-ban"></i> Sold out in ' + COLOUR_NAMES[c] + ". Choose another colour.";
+      else if (left <= 10) text.innerHTML = '<i class="fa-solid fa-fire"></i> Hurry! Only <strong>' + left + "</strong> left in " + COLOUR_NAMES[c] + ". Order soon.";
+      else text.innerHTML = '<i class="fa-solid fa-circle-check"></i> In stock: ' + left + " available in " + COLOUR_NAMES[c] + ", ships tomorrow";
+      document.getElementById("stock-fill").style.width = Math.min(100, left / 30 * 100) + "%";
+      addBtn.disabled = left === 0;
+      addBtn.innerHTML = left === 0 ? "Sold out" : '<i class="fa-solid fa-bag-shopping"></i> Add to Cart';
     }
     document.querySelectorAll(".product-image").forEach(function (img) {
       img.addEventListener("click", function () {
@@ -183,7 +266,11 @@
     });
     document.getElementById("add-to-cart").addEventListener("click", function () {
       var qty = Math.max(1, parseInt(document.getElementById("qty").value, 10) || 1);
+      var c = state.colour;
+      var left = STOCK[c] - getCart().filter(function (i) { return i.colour === c; }).reduce(function (n, i) { return n + i.qty; }, 0);
+      if (qty > left) { showToast("Sorry, only " + left + " left in " + COLOUR_NAMES[c] + "."); return; }
       addItem(state.sku, state.colour, qty);
+      renderStock();
       showToast("Added " + qty + " × " + PRODUCTS[state.sku].name + " (" + COLOUR_NAMES[state.colour] + ") to cart");
     });
     document.querySelectorAll("[data-add-refill]").forEach(function (b) {
@@ -434,6 +521,10 @@
   /* ---------- forms with PDPA consent ---------- */
   function validate(form) {
     var first = null;
+    form.querySelectorAll("[data-match]").forEach(function (f) {
+      var other = document.getElementById(f.getAttribute("data-match"));
+      f.setCustomValidity(f.value && f.value === other.value ? "" : "mismatch");
+    });
     form.querySelectorAll("input, select, textarea").forEach(function (f) {
       if (!f.willValidate || f.disabled) return;
       var bad = !f.checkValidity();
@@ -467,6 +558,19 @@
         setCart([]);
         try { SS.removeItem("pixelle-promo"); } catch (err) { /* ignore */ }
         window.location.href = "acknowledgement.html";
+      } else if (kind === "login") {
+        // Demo login: there is no account database, so greet as "Member".
+        setUser("Member", document.getElementById("l-remember").checked);
+        form.reset();
+        renderAccount();
+        window.scrollTo(0, 0);
+      } else if (kind === "signup") {
+        var first = titleCase(form.querySelector('[name="firstname"]').value.trim());
+        setUser(first, false);
+        joinClub(first);
+        form.reset();
+        renderAccount();
+        window.scrollTo(0, 0);
       } else if (kind === "member") {
         joinClub(form.querySelector('[name="firstname"]').value.trim());
         form.reset();
@@ -523,6 +627,8 @@
       if (navigator.clipboard) navigator.clipboard.writeText(btn.getAttribute("data-copy")).then(done, done); else done();
     });
   });
+
+  renderAccount();
 
   /* open an inspiration tab from a hash link */
   if (location.hash && window.bootstrap) {
